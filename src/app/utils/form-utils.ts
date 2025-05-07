@@ -1,4 +1,44 @@
-import { FormArray, FormGroup, ValidationErrors } from '@angular/forms';
+import {
+  AbstractControl,
+  FormArray,
+  FormGroup,
+  ValidationErrors,
+} from '@angular/forms';
+//#region Patterns
+export const namePattern = '([a-zA-Z]+) ([a-zA-Z]+)';
+export const emailPattern = '^[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,4}$';
+export const notOnlySpacesPattern = '^[a-zA-Z0-9]+$';
+//#endregion
+
+//#region  Custom Validators
+export const isFieldOneEqualToFieldTwo =
+  (fieldOne: string, fieldTwo: string) => (formGroup: AbstractControl) => {
+    const fieldValue = formGroup.get(fieldOne)?.value;
+    const fieldValue2 = formGroup.get(fieldTwo)?.value;
+    return fieldValue === fieldValue2 ? null : { notEqual: true };
+  };
+export const notStrider = (
+  control: AbstractControl
+): ValidationErrors | null => {
+  const value = control.value;
+  return value === 'strider' ? { noStrider: true } : null;
+};
+async function sleep() {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve(true);
+    }, 2500);
+  });
+}
+export const checkingServerResponse = async (
+  control: AbstractControl
+): Promise<ValidationErrors | null> => {
+  await sleep();
+  const formValue = control.value;
+  if (formValue === 'hola@mundo.com') return { emailTaken: true };
+  return null;
+};
+//#endregion
 
 export class FormUtils {
   constructor(private form: FormGroup) {}
@@ -38,6 +78,19 @@ export class FormUtils {
           return `El campo debe tener al menos ${errors[key].requiredLength} caracteres`;
         case 'min':
           return `El valor mínimo es ${errors[key].min}`;
+        case 'email':
+          return 'El valor ingresado no es un correo electrónico válido';
+        case 'emailTaken':
+          return 'El correo electrónico ya está en uso';
+        case 'pattern':
+          if (errors['pattern'].requiredPattern === emailPattern) {
+            return 'El valor ingresado no es un correo electrónico válido';
+          }
+          return 'Error de patron contra expresion regular';
+        case 'noStrider':
+          return 'El valor no puede ser strider';
+        default:
+          return `Error de validacion no controlado ${key}`;
       }
     }
     return null;
